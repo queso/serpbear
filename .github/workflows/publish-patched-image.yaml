@@ -3,8 +3,10 @@
 # CVE-2026-111497, a Brotli decoder out-of-bounds write that can lead to RCE).
 # Upstream towfiqi/serpbear has not published an image since v3.1.0 (2026-03-27,
 # built on Node 22.22.2). This branch is the v3.1.0 tag with the Dockerfile's
-# node:22-alpine base pinned to node:22.23.4-alpine by digest. Nothing else in
-# the app is changed. This workflow builds and publishes that image to GHCR.
+# node:22-alpine base pinned to node:22.23.4-alpine by digest, and npm installs
+# pinned with --before to upstream's build time so node_modules match the
+# upstream v3.1.0 image. Nothing else in the app is changed. This workflow
+# builds and publishes that image to GHCR.
 name: Publish patched image
 
 on:

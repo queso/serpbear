@@ -2,7 +2,12 @@
 FROM node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS deps
 WORKDIR /app
 COPY package.json ./
-RUN npm install
+# Resolve dependencies as npm did when upstream built the v3.1.0 image
+# (2026-03-27). Upstream installs without the lockfile, so a plain rebuild
+# picks up newer transitive deps; @babel/runtime 7.29.10 breaks the
+# Next.js standalone trace (missing helpers/typeof.js at startup).
+ARG NPM_BEFORE=2026-03-27T03:59:41Z
+RUN npm install --before=${NPM_BEFORE}
 
 # Stage 2: Build the application
 FROM node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS builder
@@ -40,9 +45,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh ./entrypoint.sh
 #   resolution that Next.js 12 file tracing (nft) does not follow
 # - sequelize-cli: used by entrypoint.sh for DB migrations
 # - concurrently: process manager for server.js + cron.js
+ARG NPM_BEFORE=2026-03-27T03:59:41Z
 RUN chmod +x /app/entrypoint.sh && \
     rm -f package.json && npm init -y && \
-    npm install --no-package-lock \
+    npm install --no-package-lock --before=${NPM_BEFORE} \
       croner@9.0.0 \
       cryptr@6.4.0 \
       dotenv@16.0.3 \
